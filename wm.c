@@ -712,21 +712,24 @@ handle_button_press(XEvent *e)
                     continue;
                 }
                 last_motion = current_time;
-                if (ev.xbutton.state == (unsigned)(conf.move_mask|Button1Mask) || ev.xbutton.state == Button1Mask) {
-                    nx = ocx + (ev.xmotion.x - x);
-                    ny = ocy + (ev.xmotion.y - y);
-                    if (conf.edge_lock)
-                        client_move_relative(c, nx - c->geom.x, ny - c->geom.y);
-                    else
-                        client_move_absolute(c, nx, ny);
-                } else if (ev.xbutton.state == (unsigned)(conf.resize_mask|Button1Mask)) {
-                    nw = ev.xmotion.x - x;
-                    nh = ev.xmotion.y - y;
-                    if (conf.edge_lock)
-                        client_resize_relative(c, nw - c->geom.width + ocw, nh - c->geom.height + och);
-                    else
-                        client_resize_absolute(c, ocw + nw, och + nh);
-                }
+					 // don't move nor resize if window is in fullscreen
+					 if (!c->fullscreen) {
+	                if (ev.xbutton.state == (unsigned)(conf.move_mask|Button1Mask) || ev.xbutton.state == Button1Mask) {
+	                    nx = ocx + (ev.xmotion.x - x);
+	                    ny = ocy + (ev.xmotion.y - y);
+	                    if (conf.edge_lock)
+	                        client_move_relative(c, nx - c->geom.x, ny - c->geom.y);
+	                    else
+	                        client_move_absolute(c, nx, ny);
+	                } else if (ev.xbutton.state == (unsigned)(conf.resize_mask|Button1Mask)) {
+	                    nw = ev.xmotion.x - x;
+	                    nh = ev.xmotion.y - y;
+	                    if (conf.edge_lock)
+	                        client_resize_relative(c, nw - c->geom.width + ocw, nh - c->geom.height + och);
+	                    else
+	                        client_resize_absolute(c, ocw + nw, och + nh);
+	                }
+					 }
                 XFlush(display);
                 break;
         }
