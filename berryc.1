@@ -71,6 +71,30 @@ Move and resize the current window to fill the left half of the screen\. Respect
 Move and resize the current window to fill the right half of the screen\. Respects TOP_GAP\.
 .
 .TP
+\fBsnap_top_left\fR
+Move and resize the current window to fill the top-left corner of the screen\.
+.
+.TP
+\fBsnap_top_right\fR
+Move and resize the current window to fill the top-right corner of the screen\.
+.
+.TP
+\fBsnap_bottom_left\fR
+Move and resize the current window to fill the bottom-left corner of the screen\.
+.
+.TP
+\fBsnap_bottom_right\fR
+Move and resize the current window to fill the top-right corner of the screen\.
+.
+.TP
+\fBsave_size\fR
+Save the size of the current window\.
+.
+.TP
+\fBload_size\fR
+Load saved size of current window\.
+.
+.TP
 \fBcardinal_focus\fR \fB1, 2, 3, 4\fR
 Switch focus to the nearest window in the specified direction\.
 .
@@ -160,20 +184,14 @@ Set the edge padding around the screen (must include all params)
 Determine whether new windows are decorated by default.
 .
 .TP
-\fBmove_button\fR \fB1-5\fR
-Determine the button used to move windows using the mouse.
-.
-.TP
 \fBmove_mask\fR \fBmod1/mod2/mod3/mod4/mod5\fR
-Determine the key mask used to move windows using the mouse.
-.
-.TP
-\fBresize_button\fR \fB1-5\fR
-Determine the button used to resize windows using the mouse.
+Determine the button mask used to move windows using the mouse.
 .
 .TP
 \fBresize_mask\fR \fBmod1/mod2/mod3/mod4/mod5\fR
-Determine the key mask used to resize windows using the mouse.
+Determine the button mask used to resize windows using the mouse.
+If move_mask and resize_mask use the same value, the move_mask
+takes precedence.
 .
 .TP
 \fBpointer_interval\fR \fBn\fR

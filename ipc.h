@@ -30,8 +30,18 @@ enum IPCCommand
     IPCFullscreenState,
     IPCFullscreenRemoveDec,
     IPCFullscreenMax,
+
     IPCSnapLeft,
     IPCSnapRight,
+
+    IPCSnapTopLeft,
+    IPCSnapTopRight,
+    IPCSnapBottomLeft,
+    IPCSnapBottomRight,
+
+    IPCLoadSize,
+    IPCSaveSize,
+
     IPCSaveMonitor,
     IPCCardinalFocus,
     IPCCycleFocus,
@@ -51,9 +61,7 @@ enum IPCCommand
     IPCUnmanage,
     IPCConfig,
     IPCDecorate,
-    IPCMoveButton,
     IPCMoveMask,
-    IPCResizeButton,
     IPCResizeMask,
     IPCPointerInterval,
     IPCFocusFollowsPointer,

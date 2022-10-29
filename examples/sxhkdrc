@@ -4,25 +4,34 @@
 
 # terminal emulator
 super + Return
-	urxvt
+	sakura
 
 # program launcher
 super + d
-	dmenu_run
+	dmenu_run -fn 'Dina' -nb '#242430' -nf '#fba0c0' -sb '#fba0c0' -sf '#242430'
 
 # make sxhkd reload its configuration files:
 super + Escape
 	pkill -USR1 -x sxhkd
 
+super + shift + Escape
+	killall Xephyr
+
 #
 # berry hotkeys
 #
 
-super + {h, j, k, l}
-    berryc window_move {-50 0, 0 50, 0 -50, 50 0}
+super + {Left, Down, Up, Right}
+	berryc window_move {-20 0, 0 20, 0 -20, 20 0}
 
-super + shift +  {h, j, k, l}
-    berryc window_resize {-50 0, 0 50, 0 -50, 50 0}
+super + ctrl + {Left, Down, Up, Right}
+	berryc window_move {-40 0, 0 40, 0 -40, 40 0}
+
+super + shift + {Left, Down, Up, Right}
+	berryc window_resize {-20 0, 0 20, 0 -20, 20 0}
+
+super + ctrl + shift + {Left, Down, Up, Right}
+	berryc window_resize {-40 0, 0 40, 0 -40, 40 0}
 
 super + {1-9}
     berryc switch_workspace {0-9}
@@ -30,17 +39,35 @@ super + {1-9}
 super + shift + {1-9}
     berryc send_to_workspace {0-9}
 
-super + m
+super + shift + space
     berryc window_monocle
 
 super + f
     berryc fullscreen
 
-super +  p
+super + p
     berryc snap_right
 
-super + o 
+super + o
     berryc snap_left
+
+super + shift + p
+    berryc snap_top_right
+
+super + shift + o
+    berryc snap_top_left
+
+super + ctrl + p
+    berryc snap_bottom_right
+
+super + ctrl + o
+    berryc snap_bottom_left
+
+super + r
+	berryc load_size
+
+super + shift + r
+	berryc save_size
 
 super + n
     berryc toggle_decorations
@@ -56,3 +83,4 @@ super + c
 
 ~button1
     berryc pointer_focus
+

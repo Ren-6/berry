@@ -78,6 +78,15 @@ static void client_set_title(struct client *c);
 static void client_show(struct client *c);
 static void client_snap_left(struct client *c);
 static void client_snap_right(struct client *c);
+
+static void client_snap_top_left(struct client *c);
+static void client_snap_top_right(struct client *c);
+static void client_snap_bottom_left(struct client *c);
+static void client_snap_bottom_right(struct client *c);
+
+static void client_save_size(struct client *c);
+static void client_load_size(struct client *c);
+
 static void client_toggle_decorations(struct client *c);
 static void client_set_status(struct client *c);
 
@@ -117,8 +126,18 @@ static void ipc_switch_ws(long *d);
 static void ipc_send_to_ws(long *d);
 static void ipc_fullscreen(long *d);
 static void ipc_fullscreen_state(long *d);
+
 static void ipc_snap_left(long *d);
 static void ipc_snap_right(long *d);
+
+static void ipc_snap_top_left(long *d);
+static void ipc_snap_top_right(long *d);
+static void ipc_snap_bottom_left(long *d);
+static void ipc_snap_bottom_right(long *d);
+
+static void ipc_save_size(long *d);
+static void ipc_load_size(long *d);
+
 static void ipc_cardinal_focus(long *d);
 static void ipc_cycle_focus(long *d);
 static void ipc_pointer_focus(long *d);
@@ -191,6 +210,15 @@ static const ipc_event_handler_t ipc_handler [IPCLast] = {
     [IPCFullscreenState]          = ipc_fullscreen_state,
     [IPCSnapLeft]                 = ipc_snap_left,
     [IPCSnapRight]                = ipc_snap_right,
+
+    [IPCSnapTopLeft]              = ipc_snap_top_left,
+    [IPCSnapTopRight]             = ipc_snap_top_right,
+    [IPCSnapBottomLeft]           = ipc_snap_bottom_left,
+    [IPCSnapBottomRight]          = ipc_snap_bottom_right,
+
+    [IPCSaveSize]                 = ipc_save_size,
+    [IPCLoadSize]                 = ipc_load_size,
+
     [IPCCardinalFocus]            = ipc_cardinal_focus,
     [IPCCycleFocus]               = ipc_cycle_focus,
     [IPCPointerFocus]             = ipc_pointer_focus,
@@ -424,6 +452,9 @@ client_delete(struct client *c)
         LOGP("Deleting client on workspace %d", ws);
     }
 
+    /* Prevent BadDrawable error which sometimes occurs as a window is closed */
+    // client_decorations_destroy(c);
+
     /* Delete in the stack */
     if (c_list[ws] == c) {
         c_list[ws] = c_list[ws]->next;
@@ -646,7 +677,7 @@ handle_button_press(XEvent *e)
     XEvent ev;
     struct client *c;
     int x, y, ocx, ocy, nx, ny, nw, nh, di, ocw, och;
-    unsigned int dui, state;
+    unsigned int dui;
     Window dummy;
     Time current_time, last_motion;
 
@@ -681,15 +712,14 @@ handle_button_press(XEvent *e)
                     continue;
                 }
                 last_motion = current_time;
-                state       = mod_clean(ev.xbutton.state);
-                if ((state == (unsigned)conf.move_mask && bev->button == (unsigned)conf.move_button) || ev.xbutton.state == Button1Mask) {
+                if (ev.xbutton.state == (unsigned)(conf.move_mask|Button1Mask) || ev.xbutton.state == Button1Mask) {
                     nx = ocx + (ev.xmotion.x - x);
                     ny = ocy + (ev.xmotion.y - y);
                     if (conf.edge_lock)
                         client_move_relative(c, nx - c->geom.x, ny - c->geom.y);
                     else
                         client_move_absolute(c, nx, ny);
-                } else if (state == (unsigned)conf.resize_mask && bev->button == (unsigned)conf.resize_button) {
+                } else if (ev.xbutton.state == (unsigned)(conf.resize_mask|Button1Mask)) {
                     nw = ev.xmotion.x - x;
                     nh = ev.xmotion.y - y;
                     if (conf.edge_lock)
@@ -832,7 +862,8 @@ handle_unmap_notify(XEvent *e)
         LOGN("Client found while unmapping, focusing next client");
         focus_best(c);
         if (c->decorated)
-            client_decorations_destroy(c);
+			  client_decorations_destroy(c);
+        //    XDestroyWindow(display, c->dec);
         client_delete(c);
         free(c);
         client_raise(f_client);
@@ -1050,6 +1081,68 @@ ipc_snap_right(long *d)
     client_snap_right(f_client);
 }
 
+
+static void
+ipc_snap_top_left(long *d)
+{
+    UNUSED(d);
+    if (f_client == NULL)
+        return;
+
+    client_snap_top_left(f_client);
+}
+
+static void
+ipc_snap_top_right(long *d)
+{
+    UNUSED(d);
+    if (f_client == NULL)
+        return;
+
+    client_snap_top_right(f_client);
+}
+
+static void
+ipc_snap_bottom_left(long *d)
+{
+    UNUSED(d);
+    if (f_client == NULL)
+        return;
+
+    client_snap_bottom_left(f_client);
+}
+
+static void
+ipc_snap_bottom_right(long *d)
+{
+    UNUSED(d);
+    if (f_client == NULL)
+        return;
+
+    client_snap_bottom_right(f_client);
+}
+
+static void
+ipc_save_size(long *d)
+{
+    UNUSED(d);
+    if (f_client == NULL)
+        return;
+
+    client_save_size(f_client);
+}
+
+static void
+ipc_load_size(long *d)
+{
+    UNUSED(d);
+    if (f_client == NULL)
+        return;
+
+    client_load_size(f_client);
+}
+
+
 static void
 ipc_cardinal_focus(long *d)
 {
@@ -1156,20 +1249,9 @@ ipc_config(long *d)
         case IPCDrawText:
             conf.draw_text = d[2];
             break;
-        case IPCMoveButton:
-            ungrab_buttons();
-            conf.move_button = (d[2] == 0) ? conf.move_button : d[2];
-
-            grab_buttons();
-            break;
         case IPCMoveMask:
             ungrab_buttons();
             conf.move_mask = (d[2] == 0) ? conf.move_mask : d[2];
-            grab_buttons();
-            break;
-        case IPCResizeButton:
-            ungrab_buttons();
-            conf.resize_button = (d[2] == 0) ? conf.resize_button : d[2];
             grab_buttons();
             break;
         case IPCResizeMask:
@@ -1395,10 +1477,18 @@ manage_new_window(Window w, XWindowAttributes *wa)
     if (conf.decorate)
         XMapWindow(display, c->dec);
 
+    /* make sure it's "placed" before setting this */
+    c->save = (struct client_geom) {
+        c->geom.x,
+        c->geom.y,
+        c->geom.width,
+        c->geom.height,
+    };
+
     XMapWindow(display, c->window);
     XSelectInput(display, c->window, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
-    XGrabButton(display, conf.move_button, conf.move_mask, c->window, True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
-    XGrabButton(display, conf.resize_button, conf.resize_mask, c->window, True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+    XGrabButton(display, 1, conf.move_mask, c->window, True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+    XGrabButton(display, 1, conf.resize_mask, c->window, True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
     client_manage_focus(c);
 }
 
@@ -1437,8 +1527,8 @@ grab_buttons(void)
 {
     for (int i = 0; i < WORKSPACE_NUMBER; i++)
         for (struct client *tmp = c_list[i]; tmp != NULL; tmp = tmp->next) {
-            XGrabButton(display, conf.move_button, conf.move_mask, tmp->window, True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
-            XGrabButton(display, conf.resize_button, conf.resize_mask, tmp->window, True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+            XGrabButton(display, 1, conf.move_mask, tmp->window, True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+            XGrabButton(display, 1, conf.resize_mask, tmp->window, True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
         }
 }
 
@@ -1447,8 +1537,8 @@ ungrab_buttons(void)
 {
     for (int i = 0; i < WORKSPACE_NUMBER; i++)
         for (struct client *tmp = c_list[i]; tmp != NULL; tmp = tmp->next) {
-            XUngrabButton(display, conf.move_button, conf.move_mask, tmp->window);
-            XUngrabButton(display, conf.resize_button, conf.resize_mask, tmp->window);
+            XUngrabButton(display, 1, conf.move_mask, tmp->window);
+            XUngrabButton(display, 1, conf.resize_mask, tmp->window);
         }
 }
 
@@ -1664,7 +1754,7 @@ client_raise(struct client *c)
         if (!c->decorated) {
             XRaiseWindow(display, c->window);
         } else {
-            // how may active clients are there on our workspace
+            // how many active clients are there on our workspace
             int count, i;
             count = 0;
             for (struct client *tmp = c_list[c->ws]; tmp != NULL; tmp = tmp->next) {
@@ -1719,7 +1809,8 @@ static void monitors_setup(void)
 
     for (int i = 0; i < n; i++) {
         m_list[i].screen = m_info[i].screen_number;
-        m_list[i].width = m_info[i].width;
+        // m_list[i].width = m_info[i].width;
+        m_list[i].width = m_info[i].width-1;
         m_list[i].height = m_info[i].height;
         m_list[i].x = m_info[i].x_org;
         m_list[i].y = m_info[i].y_org;
@@ -1745,12 +1836,13 @@ refresh_config(void)
 {
     for (int i = 0; i < WORKSPACE_NUMBER; i++) {
         for (struct client *tmp = c_list[i]; tmp != NULL; tmp = tmp->next) {
-            /* We run into this annoying issue when where we have to
+            /* We run into this annoying issue where we have to
              * re-create these windows since the border_width has changed.
              * We end up destroying and recreating this windows, but this
              * causes them to be redrawn on the wrong screen, regardless of
              * their current desktop. The easiest way around this is to move
              * them all to the current desktop and then back agian */
+				 /* and i'm pretty sure that "agian" wasn't on purpose */
             if (tmp->decorated && conf.decorate) {
                 client_decorations_destroy(tmp);
                 client_decorations_create(tmp);
@@ -1858,7 +1950,7 @@ client_save(struct client *c, int ws)
     c->next = c_list[ws];
     c_list[ws] = c;
 
-    /* Save the client o the list of focusing order */
+    /* Save the client to the list of focusing order */
     c->f_next = f_list[ws];
     f_list[ws] = c;
 
@@ -1887,6 +1979,9 @@ safe_to_focus(int ws)
 static void
 client_send_to_ws(struct client *c, int ws)
 {
+	 // do nothing if sending to current workspace
+    if (ws == curr_ws) return;
+
     int prev, mon_next, mon_prev, x_off, y_off;
     mon_next = ws_m_list[ws];
     mon_prev = ws_m_list[c->ws];
@@ -1904,7 +1999,6 @@ client_send_to_ws(struct client *c, int ws)
         client_show(c);
     else
         client_hide(c);
-
     ewmh_set_desktop(c, ws);
 }
 
@@ -1984,9 +2078,7 @@ setup(void)
     conf.manage[Splash]   = MANAGE_SPLASH;
     conf.manage[Utility]  = MANAGE_UTILITY;
     conf.decorate         = DECORATE_NEW;
-    conf.move_button      = MOVE_BUTTON;
     conf.move_mask        = MOVE_MASK;
-    conf.resize_button    = RESIZE_BUTTON;
     conf.resize_mask      = RESIZE_MASK;
     conf.fs_remove_dec    = FULLSCREEN_REMOVE_DEC;
     conf.fs_max           = FULLSCREEN_MAX;
@@ -2096,8 +2188,7 @@ client_show(struct client *c)
 static void
 client_snap_left(struct client *c)
 {
-    int mon;
-    mon = ws_m_list[c->ws];
+    int mon = ws_m_list[c->ws];
     client_move_absolute(c, m_list[mon].x + conf.left_gap, m_list[mon].y + conf.top_gap);
     client_resize_absolute(c, m_list[mon].width / 2 - conf.left_gap, m_list[mon].height - conf.top_gap - conf.bot_gap);
 }
@@ -2105,11 +2196,63 @@ client_snap_left(struct client *c)
 static void
 client_snap_right(struct client *c)
 {
-    int mon;
-    mon = ws_m_list[c->ws];
+    int mon = ws_m_list[c->ws];
     client_move_absolute(c, m_list[mon].x + m_list[mon].width / 2, m_list[mon].y + conf.top_gap);
     client_resize_absolute(c, m_list[mon].width / 2 - conf.right_gap, m_list[mon].height - conf.top_gap - conf.bot_gap);
 }
+
+
+static void
+client_snap_top_left(struct client *c)
+{
+    int mon = ws_m_list[c->ws];
+    client_move_absolute(c, m_list[mon].x + conf.left_gap, m_list[mon].y + conf.top_gap);
+    client_resize_absolute(c, m_list[mon].width / 2 - conf.left_gap, m_list[mon].height / 2 - conf.top_gap);
+}
+
+static void
+client_snap_top_right(struct client *c)
+{
+    int mon = ws_m_list[c->ws];
+    client_move_absolute(c, m_list[mon].x + m_list[mon].width / 2, m_list[mon].y + conf.top_gap);
+    client_resize_absolute(c, m_list[mon].width / 2 - conf.right_gap, m_list[mon].height / 2 - conf.top_gap);
+}
+
+
+static void
+client_snap_bottom_left(struct client *c)
+{
+    int mon = ws_m_list[c->ws];
+    client_move_absolute(c, m_list[mon].x + conf.left_gap, m_list[mon].y + m_list[mon].height / 2);
+    client_resize_absolute(c, m_list[mon].width / 2 - conf.left_gap, m_list[mon].height / 2 - conf.bot_gap);
+}
+
+static void
+client_snap_bottom_right(struct client *c)
+{
+    int mon = ws_m_list[c->ws];
+    client_move_absolute(c, m_list[mon].x + m_list[mon].width / 2, m_list[mon].y + m_list[mon].height / 2);
+    client_resize_absolute(c, m_list[mon].width / 2 - conf.right_gap, m_list[mon].height / 2 - conf.bot_gap);
+}
+
+static void
+client_save_size(struct client *c)
+{
+    c->save = (struct client_geom) {
+        c->geom.x,
+        c->geom.y,
+        c->geom.width,
+        c->geom.height,
+    };
+}
+
+static void
+client_load_size(struct client *c)
+{
+    client_move_absolute(c, c->save.x, c->save.y);
+    client_resize_absolute(c, c->save.width, c->save.height);
+}
+
 
 static void
 switch_ws(int ws)
@@ -2244,7 +2387,7 @@ client_set_status(struct client *c)
                 "%d, " // monitor y
                 "%d, " // monitor width
                 "%d",  // monitor height
-                (unsigned int)c->window, c->geom.x, c->geom.y, c->geom.width, c->geom.height, state, decorated,
+                (unsigned int) c->window, c->geom.x, c->geom.y, c->geom.width, c->geom.height, state, decorated,
                 mon, m_list[mon].x, m_list[mon].y, m_list[mon].width, m_list[mon].height);
     }
 
@@ -2262,14 +2405,14 @@ static void
 ewmh_set_fullscreen(struct client *c, bool fullscreen)
 {
     XChangeProperty(display, c->window, net_atom[NetWMState], XA_ATOM, 32,
-            PropModeReplace, (unsigned char *)&net_atom[NetWMStateFullscreen], fullscreen ? 1 : 0 );
+            PropModeReplace, (unsigned char *) &net_atom[NetWMStateFullscreen], fullscreen ? 1 : 0 );
 }
 
 static void
 ewmh_set_viewport(void)
 {
     unsigned long data[2] = { 0, 0 };
-    XChangeProperty(display, root, net_atom[NetDesktopViewport], XA_CARDINAL, 32, PropModeReplace, (unsigned char*)&data, 2);
+    XChangeProperty(display, root, net_atom[NetDesktopViewport], XA_CARDINAL, 32, PropModeReplace, (unsigned char *) &data, 2);
 }
 
 static void

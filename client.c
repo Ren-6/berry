@@ -63,8 +63,18 @@ static const struct command command_table[] = {
     { "fullscreen_state",       IPCFullscreenState,         false, 0, NULL       },
     { "fullscreen_remove_dec",  IPCFullscreenRemoveDec,     true,  1, fn_bool    },
     { "fullscreen_max",         IPCFullscreenMax,           true,  1, fn_bool    },
+ 
     { "snap_left",              IPCSnapLeft,                false, 0, NULL       },
     { "snap_right",             IPCSnapRight,               false, 0, NULL       },
+
+    { "snap_top_left",          IPCSnapTopLeft,             false, 0, NULL       },
+    { "snap_top_right",         IPCSnapTopRight,            false, 0, NULL       },
+    { "snap_bottom_left",       IPCSnapBottomLeft,          false, 0, NULL       },
+    { "snap_bottom_right",      IPCSnapBottomRight,         false, 0, NULL       },
+
+    { "save_size",              IPCSaveSize,                false, 0, NULL       },
+    { "load_size",              IPCLoadSize,                false, 0, NULL       },
+
     { "cardinal_focus",         IPCCardinalFocus,           false, 1, fn_int     },
     { "toggle_decorations",     IPCWindowToggleDecorations, false, 0, NULL       },
     { "cycle_focus",            IPCCycleFocus,              false, 0, NULL       },
@@ -82,9 +92,7 @@ static const struct command command_table[] = {
     { "unmanage",               IPCUnmanage,                true,  1, fn_str     },
     { "decorate_new",           IPCDecorate,                true,  1, fn_bool    },
     { "name_desktop",           IPCNameDesktop,             false, 2, fn_int_str },
-    { "move_button",            IPCMoveButton,              true,  1, fn_int     },
     { "move_mask",              IPCMoveMask,                true,  1, fn_mask    },
-    { "resize_button",          IPCResizeButton,            true,  1, fn_int     },
     { "resize_mask",            IPCResizeMask,              true,  1, fn_mask    },
     { "pointer_interval",       IPCPointerInterval,         true,  1, fn_int     },
     { "focus_follows_pointer",  IPCFocusFollowsPointer,     true,  1, fn_bool    },
@@ -286,7 +294,7 @@ main(int argc, char **argv)
         }
     }
 
-    for (int i = 0; i < (int)(sizeof command_table / sizeof command_table[0]); i++) {
+    for (int i = 0; i < (int)(sizeof(command_table) / sizeof(command_table[0])); i++) {
         if (strcmp(argv[1], command_table[i].name) == 0) {
             if (command_table[i].argc != c_argc) {
                 printf("Wrong number of arguments\n");
