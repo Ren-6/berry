@@ -62,7 +62,6 @@ enum IPCCommand
     IPCConfig,
     IPCDecorate,
     IPCMoveMask,
-    IPCResizeMask,
     IPCPointerInterval,
     IPCFocusFollowsPointer,
     IPCWarpPointer,
