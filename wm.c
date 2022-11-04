@@ -721,7 +721,7 @@ handle_button_press(XEvent *e)
 	                        client_move_relative(c, nx - c->geom.x, ny - c->geom.y);
 	                    else
 	                        client_move_absolute(c, nx, ny);
-	                } else if (ev.xbutton.state == (unsigned)(conf.move_mask|Button3Mask)) {
+	                } else if (ev.xbutton.state == (unsigned)(conf.resize_mask|Button3Mask)) {
 	                    nw = ev.xmotion.x - x;
 	                    nh = ev.xmotion.y - y;
 	                    if (conf.edge_lock)
@@ -1257,7 +1257,12 @@ ipc_config(long *d)
             conf.move_mask = (d[2] == 0) ? conf.move_mask : d[2];
             grab_buttons();
             break;
-        case IPCPointerInterval:
+        case IPCResizeMask:
+            ungrab_buttons();
+            conf.resize_mask = (d[2] == 0) ? conf.resize_mask : d[2];
+            grab_buttons();
+            break;
+		  case IPCPointerInterval:
             conf.pointer_interval = d[2];
             break;
         case IPCFocusFollowsPointer:
@@ -1484,9 +1489,17 @@ manage_new_window(Window w, XWindowAttributes *wa)
     };
 
     XMapWindow(display, c->window);
-    XSelectInput(display, c->window, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
-    XGrabButton(display, 1, conf.move_mask, c->window, True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
-    XGrabButton(display, 3, conf.move_mask, c->window, True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+    XSelectInput(display, c->window, 
+			 EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
+
+    XGrabButton(display, 1, conf.move_mask, c->window, True,
+			 ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+			 GrabModeAsync, GrabModeAsync, None, None);
+
+    XGrabButton(display, 3, conf.resize_mask, c->window, True,
+			 ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+			 GrabModeAsync, GrabModeAsync, None, None);
+
     client_manage_focus(c);
 }
 
@@ -1525,8 +1538,13 @@ grab_buttons(void)
 {
     for (int i = 0; i < WORKSPACE_NUMBER; i++)
         for (struct client *tmp = c_list[i]; tmp != NULL; tmp = tmp->next) {
-            XGrabButton(display, 1, conf.move_mask, tmp->window, True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
-            XGrabButton(display, 3, conf.move_mask, tmp->window, True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+            XGrabButton(display, 1, conf.move_mask, tmp->window, True,
+						ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+						GrabModeAsync, GrabModeAsync, None, None);
+
+            XGrabButton(display, 3, conf.resize_mask, tmp->window, True,
+						ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+						GrabModeAsync, GrabModeAsync, None, None);
         }
 }
 
@@ -1536,7 +1554,7 @@ ungrab_buttons(void)
     for (int i = 0; i < WORKSPACE_NUMBER; i++)
         for (struct client *tmp = c_list[i]; tmp != NULL; tmp = tmp->next) {
             XUngrabButton(display, 1, conf.move_mask, tmp->window);
-            XUngrabButton(display, 3, conf.move_mask, tmp->window);
+            XUngrabButton(display, 3, conf.resize_mask, tmp->window);
         }
 }
 
@@ -2077,6 +2095,7 @@ setup(void)
     conf.manage[Utility]  = MANAGE_UTILITY;
     conf.decorate         = DECORATE_NEW;
     conf.move_mask        = MOVE_MASK;
+    conf.resize_mask      = RESIZE_MASK;
     conf.fs_remove_dec    = FULLSCREEN_REMOVE_DEC;
     conf.fs_max           = FULLSCREEN_MAX;
     conf.pointer_interval = POINTER_INTERVAL;
