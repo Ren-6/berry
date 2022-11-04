@@ -712,7 +712,7 @@ handle_button_press(XEvent *e)
                     continue;
                 }
                 last_motion = current_time;
-					 // don't move nor resize if window is in fullscreen
+					 // don't move nor resize if window in fullscreen
 					 if (!c->fullscreen) {
 	                if (ev.xbutton.state == (unsigned)(conf.move_mask|Button1Mask) || ev.xbutton.state == Button1Mask) {
 	                    nx = ocx + (ev.xmotion.x - x);
