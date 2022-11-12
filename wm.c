@@ -76,9 +76,11 @@ static void client_set_color(struct client *c, unsigned long i_color, unsigned l
 static void client_set_input(struct client *c);
 static void client_set_title(struct client *c);
 static void client_show(struct client *c);
+
 static void client_snap_left(struct client *c);
 static void client_snap_right(struct client *c);
-
+static void client_snap_top(struct client *c);
+static void client_snap_bottom(struct client *c);
 static void client_snap_top_left(struct client *c);
 static void client_snap_top_right(struct client *c);
 static void client_snap_bottom_left(struct client *c);
@@ -129,6 +131,9 @@ static void ipc_fullscreen_state(long *d);
 
 static void ipc_snap_left(long *d);
 static void ipc_snap_right(long *d);
+
+static void ipc_snap_top(long *d);
+static void ipc_snap_bottom(long *d);
 
 static void ipc_snap_top_left(long *d);
 static void ipc_snap_top_right(long *d);
@@ -211,6 +216,8 @@ static const ipc_event_handler_t ipc_handler [IPCLast] = {
     [IPCSnapLeft]                 = ipc_snap_left,
     [IPCSnapRight]                = ipc_snap_right,
 
+    [IPCSnapTop]                  = ipc_snap_top,
+    [IPCSnapBottom]               = ipc_snap_bottom,
     [IPCSnapTopLeft]              = ipc_snap_top_left,
     [IPCSnapTopRight]             = ipc_snap_top_right,
     [IPCSnapBottomLeft]           = ipc_snap_bottom_left,
@@ -1084,6 +1091,25 @@ ipc_snap_right(long *d)
     client_snap_right(f_client);
 }
 
+static void
+ipc_snap_top(long *d)
+{
+    UNUSED(d);
+    if (f_client == NULL)
+        return;
+
+    client_snap_top(f_client);
+}
+
+static void
+ipc_snap_bottom(long *d)
+{
+    UNUSED(d);
+    if (f_client == NULL)
+        return;
+
+    client_snap_bottom(f_client);
+}
 
 static void
 ipc_snap_top_left(long *d)
@@ -2215,6 +2241,22 @@ client_snap_right(struct client *c)
     int mon = ws_m_list[c->ws];
     client_move_absolute(c, m_list[mon].x + m_list[mon].width / 2, m_list[mon].y + conf.top_gap);
     client_resize_absolute(c, m_list[mon].width / 2 - conf.right_gap, m_list[mon].height - conf.top_gap - conf.bot_gap);
+}
+
+static void
+client_snap_top(struct client *c)
+{
+    int mon = ws_m_list[c->ws];
+    client_move_absolute(c, m_list[mon].x + conf.left_gap, m_list[mon].y + conf.top_gap);
+    client_resize_absolute(c, m_list[mon].width - conf.left_gap, m_list[mon].height / 2 - conf.top_gap);
+}
+
+static void
+client_snap_bottom(struct client *c)
+{
+    int mon = ws_m_list[c->ws];
+    client_move_absolute(c, m_list[mon].x + conf.left_gap, m_list[mon].y + m_list[mon].height / 2);
+    client_resize_absolute(c, m_list[mon].width - conf.left_gap, m_list[mon].height / 2 - conf.bot_gap);
 }
 
 static void

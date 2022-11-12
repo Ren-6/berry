@@ -39,6 +39,8 @@ struct command {
     void (*handler)(long *, bool, int, char **);
 };
 
+// TODO: make only one 'snap' command and have position be its argument
+
 static const struct command command_table[] = {
     { "window_move",            IPCWindowMoveRelative,      false, 2, fn_int     },
     { "window_move_absolute",   IPCWindowMoveAbsolute,      false, 2, fn_int     },
@@ -66,6 +68,8 @@ static const struct command command_table[] = {
  
     { "snap_left",              IPCSnapLeft,                false, 0, NULL       },
     { "snap_right",             IPCSnapRight,               false, 0, NULL       },
+    { "snap_top",               IPCSnapTop,                 false, 0, NULL       },
+    { "snap_bottom",            IPCSnapBottom,              false, 0, NULL       },
 
     { "snap_top_left",          IPCSnapTopLeft,             false, 0, NULL       },
     { "snap_top_right",         IPCSnapTopRight,            false, 0, NULL       },

@@ -33,6 +33,8 @@ enum IPCCommand
 
     IPCSnapLeft,
     IPCSnapRight,
+    IPCSnapTop,
+    IPCSnapBottom,
 
     IPCSnapTopLeft,
     IPCSnapTopRight,
