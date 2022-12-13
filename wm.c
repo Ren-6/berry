@@ -310,7 +310,7 @@ client_center(struct client *c)
 }
 
 static int
-ceil10 (int n)
+ceil10(int n)
 {
     return (n + 9) - (n + 9) % 10;
 }
@@ -624,9 +624,9 @@ handle_client_message(XEvent *e)
     if (cme->message_type == net_berry[BerryClientEvent]) {
         LOGN("Recieved event from berryc");
         if (cme->format != 32) {
-			LOGN("Wrong format, ignoring event");
-			return;
-		}
+            LOGN("Wrong format, ignoring event");
+            return;
+        }
         cmd = cme->data.l[0];
         data = cme->data.l;
         ipc_handler[cmd](data);
@@ -719,24 +719,24 @@ handle_button_press(XEvent *e)
                     continue;
                 }
                 last_motion = current_time;
-					 // don't move nor resize if window in fullscreen
-					 if (!c->fullscreen) {
-	                if (ev.xbutton.state == (unsigned)(conf.move_mask|Button1Mask) || ev.xbutton.state == Button1Mask) {
-	                    nx = ocx + (ev.xmotion.x - x);
-	                    ny = ocy + (ev.xmotion.y - y);
-	                    if (conf.edge_lock)
-	                        client_move_relative(c, nx - c->geom.x, ny - c->geom.y);
-	                    else
-	                        client_move_absolute(c, nx, ny);
-	                } else if (ev.xbutton.state == (unsigned)(conf.resize_mask|Button3Mask)) {
-	                    nw = ev.xmotion.x - x;
-	                    nh = ev.xmotion.y - y;
-	                    if (conf.edge_lock)
-	                        client_resize_relative(c, nw - c->geom.width + ocw, nh - c->geom.height + och);
-	                    else
-	                        client_resize_absolute(c, ocw + nw, och + nh);
-	                }
-					 }
+                     // don't move nor resize if window in fullscreen
+                     if (!c->fullscreen) {
+                    if (ev.xbutton.state == (unsigned)(conf.move_mask|Button1Mask) || ev.xbutton.state == Button1Mask) {
+                        nx = ocx + (ev.xmotion.x - x);
+                        ny = ocy + (ev.xmotion.y - y);
+                        if (conf.edge_lock)
+                            client_move_relative(c, nx - c->geom.x, ny - c->geom.y);
+                        else
+                            client_move_absolute(c, nx, ny);
+                    } else if (ev.xbutton.state == (unsigned)(conf.resize_mask|Button3Mask)) {
+                        nw = ev.xmotion.x - x;
+                        nh = ev.xmotion.y - y;
+                        if (conf.edge_lock)
+                            client_resize_relative(c, nw - c->geom.width + ocw, nh - c->geom.height + och);
+                        else
+                            client_resize_absolute(c, ocw + nw, och + nh);
+                    }
+                     }
                 XFlush(display);
                 break;
         }
@@ -872,7 +872,7 @@ handle_unmap_notify(XEvent *e)
         LOGN("Client found while unmapping, focusing next client");
         focus_best(c);
         if (c->decorated)
-			  client_decorations_destroy(c);
+              client_decorations_destroy(c);
         //    XDestroyWindow(display, c->dec);
         client_delete(c);
         free(c);
@@ -1288,7 +1288,7 @@ ipc_config(long *d)
             conf.resize_mask = (d[2] == 0) ? conf.resize_mask : d[2];
             grab_buttons();
             break;
-		  case IPCPointerInterval:
+          case IPCPointerInterval:
             conf.pointer_interval = d[2];
             break;
         case IPCFocusFollowsPointer:
@@ -1417,8 +1417,9 @@ client_manage_focus(struct client *c)
         manage_xsend_icccm(c, wm_atom[WMTakeFocus]);
         if (c->ws != curr_ws)
             switch_ws(c->ws);
-    } else { //client is null, might happen when switching to a new workspace
-             // without any active clients
+    } else {
+        //client is null, might happen when switching to a new workspace
+        // without any active clients
         LOGN("Giving focus to dummy window");
         f_client = NULL;
         XSetInputFocus(display, nofocus, RevertToPointerRoot, CurrentTime);
@@ -1434,8 +1435,7 @@ manage_new_window(Window w, XWindowAttributes *wa)
     int di;
     unsigned long dl;
     if (XGetWindowProperty(display, w, net_atom[NetWMWindowType], 0,
-                sizeof (Atom), False, XA_ATOM, &da, &di, &dl, &dl,
-                &prop_ret) == Success) {
+                sizeof(Atom), False, XA_ATOM, &da, &di, &dl, &dl, &prop_ret) == Success) {
         if (prop_ret) {
             prop = ((Atom *)prop_ret)[0];
             if ((prop == net_atom[NetWMWindowTypeDock]    && !conf.manage[Dock])    ||
@@ -1516,15 +1516,15 @@ manage_new_window(Window w, XWindowAttributes *wa)
 
     XMapWindow(display, c->window);
     XSelectInput(display, c->window, 
-			 EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
+             EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
 
     XGrabButton(display, 1, conf.move_mask, c->window, True,
-			 ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
-			 GrabModeAsync, GrabModeAsync, None, None);
+             ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+             GrabModeAsync, GrabModeAsync, None, None);
 
     XGrabButton(display, 3, conf.resize_mask, c->window, True,
-			 ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
-			 GrabModeAsync, GrabModeAsync, None, None);
+             ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+             GrabModeAsync, GrabModeAsync, None, None);
 
     client_manage_focus(c);
 }
@@ -1565,12 +1565,12 @@ grab_buttons(void)
     for (int i = 0; i < WORKSPACE_NUMBER; i++)
         for (struct client *tmp = c_list[i]; tmp != NULL; tmp = tmp->next) {
             XGrabButton(display, 1, conf.move_mask, tmp->window, True,
-						ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
-						GrabModeAsync, GrabModeAsync, None, None);
+                        ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+                        GrabModeAsync, GrabModeAsync, None, None);
 
             XGrabButton(display, 3, conf.resize_mask, tmp->window, True,
-						ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
-						GrabModeAsync, GrabModeAsync, None, None);
+                        ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+                        GrabModeAsync, GrabModeAsync, None, None);
         }
 }
 
@@ -1819,7 +1819,8 @@ client_raise(struct client *c)
     }
 }
 
-static void monitors_setup(void)
+static void
+monitors_setup(void)
 {
     XineramaScreenInfo *m_info;
     int n;
@@ -1884,7 +1885,7 @@ refresh_config(void)
              * causes them to be redrawn on the wrong screen, regardless of
              * their current desktop. The easiest way around this is to move
              * them all to the current desktop and then back agian */
-				 /* and i'm pretty sure that "agian" wasn't on purpose */
+                 /* and i'm pretty sure that "agian" wasn't on purpose */
             if (tmp->decorated && conf.decorate) {
                 client_decorations_destroy(tmp);
                 client_decorations_create(tmp);
@@ -2021,7 +2022,7 @@ safe_to_focus(int ws)
 static void
 client_send_to_ws(struct client *c, int ws)
 {
-	 // do nothing if sending to current workspace
+     // do nothing if sending to current workspace
     if (ws == curr_ws) return;
 
     int prev, mon_next, mon_prev, x_off, y_off;
@@ -2084,7 +2085,7 @@ client_set_title(struct client *c)
         }
     }
 
-    c->title[sizeof c->title - 1] = 0;
+    c->title[sizeof(c->title) - 1] = 0;
     XFree(tp.value);
 }
 
@@ -2488,7 +2489,8 @@ ewmh_set_desktop(struct client *c, int ws)
             XA_CARDINAL, 32, PropModeReplace, (unsigned char *) data, 1);
 }
 
-static void ewmh_set_frame_extents(struct client *c)
+static void
+ewmh_set_frame_extents(struct client *c)
 {
     unsigned long data[4];
     int left, right, top, bottom;
@@ -2509,7 +2511,8 @@ static void ewmh_set_frame_extents(struct client *c)
             XA_CARDINAL, 32, PropModeReplace, (unsigned char *) data, 4);
 }
 
-static void ewmh_set_client_list(void)
+static void
+ewmh_set_client_list(void)
 {
     /* Remove all current clients */
     XDeleteProperty(display, root, net_atom[NetClientList]);
@@ -2520,12 +2523,13 @@ static void ewmh_set_client_list(void)
 }
 
 /*
-* Create and populate the values for _NET_DESKTOP_NAMES,
-* used by applications such as polybar for named workspaces.
-* By default, set the name of each workspaces to simply be the
-* index of that workspace.
-*/
-static void ewmh_set_desktop_names(void)
+ * Create and populate the values for _NET_DESKTOP_NAMES,
+ * used by applications such as polybar for named workspaces.
+ * By default, set the name of each workspaces to simply be the
+ * index of that workspace.
+ */
+static void
+ewmh_set_desktop_names(void)
 {
     char** list = calloc(WORKSPACE_NUMBER, sizeof(char*));
     for (int i = 0; i < WORKSPACE_NUMBER; i++)
@@ -2741,3 +2745,4 @@ main(int argc, char *argv[])
     free(font_name);
     free(conf_path);
 }
+// vim:sw=4:ts=4:et:

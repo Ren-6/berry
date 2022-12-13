@@ -313,3 +313,4 @@ main(int argc, char **argv)
     fprintf(stderr, "Command not found %s, exiting\n", argv[1]);
     return EXIT_FAILURE;
 }
+// vim:sw=4:ts=4:et:
