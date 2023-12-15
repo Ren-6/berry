@@ -1853,8 +1853,8 @@ monitors_setup(void)
 
     for (int i = 0; i < n; i++) {
         m_list[i].screen = m_info[i].screen_number;
-        // m_list[i].width = m_info[i].width;
-        m_list[i].width = m_info[i].width-1;
+        m_list[i].width = m_info[i].width;
+        /* m_list[i].width = m_info[i].width-1; */
         m_list[i].height = m_info[i].height;
         m_list[i].x = m_info[i].x_org;
         m_list[i].y = m_info[i].y_org;
